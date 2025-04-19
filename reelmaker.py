@@ -250,7 +250,7 @@ final_video.write_videofile("final_video.mp4", codec="libx264", fps=30)
 
 
 # Define the port and directory
-PORT = 8000
+PORT = 3000
 DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 
 # Change the current working directory to the script's directory
