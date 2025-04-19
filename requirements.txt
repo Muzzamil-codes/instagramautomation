@@ -1,0 +1,12 @@
+discord.py
+python-dotenv
+requests
+beautifulsoup4
+pillow
+moviepy
+pyngrok
+dhooks
+numpy
+pydantic
+crewai
+crewai-tools
