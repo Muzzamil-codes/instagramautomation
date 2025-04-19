@@ -1,9 +1,9 @@
-If we're all just bits of data, does that mean our consciousness is just a glitch in the matrix?
+If a tree falls in a forest and no one is around to hear it, does it make a sound? But what if the tree falls on a recording device?
 
-Is the universe expanding, or are we shrinking?
+Does it still make a sound?
 -
 -
 -
 -
 -
-#showerthoughts #existentialism #philosophy #universe
+#showerthoughts #philosophy #existentialism #sound
