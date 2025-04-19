@@ -3,7 +3,7 @@ python-dotenv
 requests
 beautifulsoup4
 pillow
-moviepy
+moviepy==1.0.3
 pyngrok
 dhooks
 numpy
