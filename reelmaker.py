@@ -13,33 +13,27 @@ import os
 import threading
 import time
 import csv
-
+import json
 
 load_dotenv()
 
-file_path = "draft_thought.md"
+file_path = "showerthought.json"
 
 instagram_long_access = os.getenv("INSTAGRAM_ACCESS_TOKEN")
 
 if not os.path.exists(file_path):
     print(f"File '{file_path}' does not exist.")
-    raise FileNotFoundError("The given markdown file does not exist brother... what you doin!? I know errors are DUMB but its ok you can do it 👍")
+    raise FileNotFoundError("The given json file does not exist brother... what you doin!? I know errors are DUMB but its ok you can do it 👍")
 
-with open(file_path, 'r', encoding='utf-8') as file:
-    lines = file.readlines()
+with open(file_path, 'r') as file:
+    data = json.load(file)
+    first_line = data["thought"]
+    caption = "\n".join(data["tags"])
 
-# Strip trailing and leading whitespaces from all lines
-cleaned_lines = [line.strip() for line in lines if line.strip() != ""]
-
-if not cleaned_lines:
+if not first_line or caption:
     print("The file is empty or contains only whitespace.")
     raise ValueError("The file is EMPTYYYY BROTHAAAAR!!!!")
 
-# First non-empty line is the title
-first_line = cleaned_lines[0]
-
-# Remaining lines form the rest of the thought
-caption = "\n".join(cleaned_lines[1:])
 
 # Initializing discord webhook
 hook = Webhook(os.getenv("DISCORD_WEBHOOK_TOKEN"))

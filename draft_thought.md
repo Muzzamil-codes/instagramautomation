@@ -1,9 +1,13 @@
-If a tree falls in a forest and no one is around to hear it, does it make a sound? But what if the tree falls on a recording device?
+If we're all made of stardust, are we all just slightly sparkly?
 
-Does it still make a sound?
+Is it just me, or does time move faster the older you get?
+
+Why do we call it a building when it's already built?
+
+
 -
 -
 -
 -
 -
-#showerthoughts #philosophy #existentialism #sound
+#showerthoughts #existential #philosophy #space #time #life #funny #relatable #deepthoughts #randomthoughts #mindblown

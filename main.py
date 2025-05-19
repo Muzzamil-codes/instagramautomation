@@ -1,5 +1,6 @@
 import warnings
 import os
+import json
 from crewai_tools import CSVSearchTool
 from crewai.tools import BaseTool
 from crewai import Agent, Task, Crew
@@ -9,11 +10,23 @@ from typing import Type
 from discordbot import run_discord_bot
 import threading
 import time
+import requests
+
+
+# Get a showerthought
+
+with open("showerthoughts.json", "r") as f:
+    data = json.load(f)
+    thought = data.pop()
+    
+# Update showerthoughts.json file
+
+with open('showerthoughts.json', 'w') as f:
+    json.dump(data, f, indent=4)
 
 warnings.filterwarnings('ignore')
 
 os.environ['GOOGLE_API_KEY'] = "AIzaSyAsOcKmk-zh9sPZM5gWprOnmsG4xnIr4x0"
-
 
 llm = LLM(
     provider="google",
@@ -23,52 +36,20 @@ llm = LLM(
     api_key="AIzaSyAsOcKmk-zh9sPZM5gWprOnmsG4xnIr4x0"
 )
 
-# CSV search tool
-csvreader = CSVSearchTool(
-    file_path='instagram_posts.csv',
-    config=dict(
-        llm=dict(
-            provider="google",
-            config=dict(
-                model="gemini/gemini-1.5-flash"  # Corrected model name
-            ),
-        ),
-        embedder=dict(
-            provider="google",
-            config=dict(
-                model="models/embedding-001",
-                task_type="retrieval_document",
-                # Add any additional parameters if needed
-            ),
-        ),
-    )
-)
-
-#Custom tool to search gif
+# Custom tool to search gif
 class MyToolInput(BaseModel):
-    """Input schema for MyCustomTool."""
-    query: str = Field(..., description="The Argument has to be a string and should be keywords to find gif closely related to them")
+    query: str = Field(..., description="Keywords to find a related GIF")
 
 class GIFSearchTool(BaseTool):
-    name: str="GIF Search tool"
-    description: str="Search a gif based one provided query"
-    args_schema: Type[BaseModel] = MyToolInput
-    def _run(self, query:str) ->str:
-        """
-        Search for a GIF from a vast library of GIFs available on the internet which matches with the provided query
-        
-        Args:
-            query: The GIF you want to search
+    name: str = "GIF Search tool"  # Added type annotation
+    description: str = "Search a gif based on provided keywords"  # Added type annotation
+    args_schema: Type[BaseModel] = MyToolInput  # Proper annotation
 
-        Returns:
-            A default message whether the gif was successfully installed or not in string
-        """
-        import requests
+    def _run(self, query: str) -> str:
         api_key = "vZ7hCK3M3NfHwoTPX9ypgZPucKOhhxVE"
-        print("This was the query given as input to the Gif Search tool:", query)
         response = requests.get(
             "https://api.giphy.com/v1/gifs/search",
-            params={'api_key': api_key, 'q':query, 'limit':1}
+            params={'api_key': api_key, 'q': query, 'limit': 1}
         )
         data = response.json()
         if data["data"]:
@@ -85,112 +66,69 @@ class GIFSearchTool(BaseTool):
 giphy_tool = GIFSearchTool()
 
 # Define Agents
-content_writer = Agent(
-    role="Shower Thought Strategist",
-    goal="Create viral-worthy shower thoughts with 'aha' moments",
-    backstory="""A creative genius specializing in paradoxical observations 
-    and unexpected perspectives. Known for crafting thoughts that spark 
-    both contemplation and debate across social media.""",
-    allow_delegation=False,
-    tools=[csvreader],
-    verbose=True,
-    llm=llm
-)
 
 gif_finder = Agent(
-    role="Expert GIF Scraper",
-    goal="Find the perfect GIFs for shower thoughts",
-    backstory="A creative visual curator who finds matching GIFs for abstract thoughts.",
+    role="GIF Curator",
+    goal="Find the perfect GIF for the selected shower thought",
+    backstory="A visual specialist with a knack for matching abstract thoughts to GIFs."
+            "You know are well aware of those keywords that can be used to search GIFs"
+            "that contains a touch of a confused and deep thinking type look while being"
+            "related to the theme of the thought.",
     tools=[giphy_tool],
     verbose=True,
     llm=llm
 )
 
-# Define Tasks
-shower_thought_task = Task(
-    description= "Analyze the CSV file of previous shower thoughts using the CSVSearchTool. "
-        'The provided .csv file contains the following columns: "PostURL","ShowerThought","VideoViews","Likes","Comments","Saves","shares","EngagementRate"'
-        "Use the tool to search for top-performing shower thoughts by querying engagement metrics like \"Likes\", \"VideoViews\", or \"EngagementRate\". "
-        "query out \"ShowerThought\" with higest \"VideoViews\" and lowest ones as well to check what is working and what is not "
-        "Identify patterns in style or structure and create new thoughts inspired by those successful ones. "
-        "Avoid repetitive themes and try to generate thoughts with fresh, diverse ideas.",
-    
-    expected_output="""A thought formatted as:
-    [Thought text here]
-    
-    [Line break]
-    [One line caption here]
-    -
-    -
-    -
-    -
-    -
-    #showerthoughts #[relevant_tag1] #[relevant_tag2] #[relevant_tag3]
-    eg.
-    In 8 more years, we won't have to wonder if the date is written in mm-dd or mm-yy.
-    
-    I don't overthink. Also me
-    -
-    -
-    -
-    -
-    -
-    #showerthoughts #deepthoughts #randomthoughts #random
-    """,
-    
-    agent=content_writer,
-    output_file="draft_thought.md"
+tags_finder = Agent(
+    role="Instagram Tag SEO specialist",
+    goal="Find the perfect tags for the selected shower thought",
+    backstory="A specialist in finding perfect and most popular tags for" \
+    "intsgram reels that ressemble the shower thought.",
+    verbose=True,
+    llm=llm
 )
+
+
+# Define Tasks
 
 gif_task = Task(
-    description="Find a suitable GIF for the showerthought made by Shower Thought Strategist "
-        "using GIFSerachTool. Make sure to provide keywords realted to the gif you are looking for and not a sentence. "
-        "always try to use 'confused' keyword in your keywords and make sure not to use more than 3 keywords.",
+    description=(
+        "Find a suitable GIF for the shower thought '{thought}'"
+        "using the GIFSearchTool to find and save the GIF by using keywords"
+        "that closely ressembles the theme of the thought while maintaining"
+        "the thinking and confused type look."
+    ),
     agent=gif_finder,
-    expected_output="A message confirming that the gif has been saved successfully.",
-    context=[shower_thought_task]
+    expected_output="Confirmation that the GIF was saved as gif.gif",
 )
 
-# Create Crew
+
+class Tags(BaseModel):
+    tags:list
+
+tags_task = Task(
+    description=(
+        "Find suitable tags for the shower thought '{thought}'"
+    ),
+    agent=tags_finder,
+    output_json=Tags,
+    output_file="showerthought.json",
+)
+
+# Create and run the crew
 thought_crew = Crew(
-    agents=[content_writer],
-    tasks=[shower_thought_task],
+    agents=[gif_finder, tags_finder],
+    tasks=[gif_task, tags_task],
     verbose=True
 )
 
-thought_crew.kickoff()
+thought_crew.kickoff(inputs={"thought":thought})
 
-file_path = "draft_thought.md"
+with open("showerthought.json", "r") as f:
+    data = json.load()
+with open("showerthought.json", "r") as f:
+    data["thought"] = thought
+    json.dump(data, f, indent=4)
+    
 
-instagram_long_access = os.getenv("INSTAGRAM_ACCESS_TOKEN")
-
-if not os.path.exists(file_path):
-    print(f"File '{file_path}' does not exist.")
-    raise FileNotFoundError("The given markdown file does not exist brother... what you doin!? I know errors are DUMB but its ok you can do it 👍")
-
-with open(file_path, 'r', encoding='utf-8') as file:
-    lines = file.readlines()
-
-# Strip trailing and leading whitespaces from all lines
-cleaned_lines = [line.strip() for line in lines if line.strip() != ""]
-
-if not cleaned_lines:
-    print("The file is empty or contains only whitespace.")
-    raise ValueError("The file is EMPTYYYY BROTHAAAAR!!!!")
-
-# First non-empty line is the title
-first_line = cleaned_lines[0]
-run_discord_bot(first_line)
-
-
-file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'gif.gif')
-
-# Check if the file exists
-if os.path.exists(file_path):
-    print("The file 'gif.gif' exists in the same folder.")
-else:
-    gif_crew = Crew(
-        agents=[gif_finder],
-        tasks=[gif_task]
-    )
-    gif_crew.kickoff()
+run_discord_bot(thought)
