@@ -10,30 +10,110 @@ from typing import Type
 from discordbot import run_discord_bot
 import threading
 import time
+import random
 import requests
+from pprint import pprint
+from dotenv import load_dotenv
 
+load_dotenv()
 
-# Get a showerthought
+# # Get a showerthought
 
-with open("showerthoughts.json", "r") as f:
-    data = json.load(f)
-    thought = data.pop()
+# with open("showerthoughts.json", "r") as f:
+#     data = json.load(f)
+#     thought = data.pop()
     
-# Update showerthoughts.json file
+# # Update showerthoughts.json file
 
-with open('showerthoughts.json', 'w') as f:
-    json.dump(data, f, indent=4)
+# with open('showerthoughts.json', 'w') as f:
+#     json.dump(data, f, indent=4)
+
+
+#Login to our instagram account
+
+
+# Pull function to pull content from r/showerthoughts subreddit
+
+def pull():
+    url = "https://www.reddit.com/r/showerthoughts/top.json?t=month&limit=50"
+
+
+    client_id = os.getenv("REDDIT_ID")
+    secret_key = os.getenv("REDDIT_SECRET_KEY")
+
+    auth = requests.auth.HTTPBasicAuth(client_id, secret_key)
+
+    data = {
+        'grant_type': "password",
+        'username': os.getenv("REDDIT_ID"),
+        'password': os.getenv("REDDIT_SECRET_KEY")
+    }
+
+    header = {
+        'User-Agent' : "justabotman"
+    }
+
+    output = requests.get(url, auth=auth, data=data, headers=header)
+
+    if output.ok:
+        data = output.json()
+        with open('showerthoughts.json', 'w') as file:
+            data = data['data']['children']
+            json.dump(data, file)
+
+    else:
+        pprint(output.text)
+        print(f"error [{output.status_code}]")
+
+print('#################################################################################################')
+
+# This function is to choose a random showerthought from the showerthoughts.json file and then save it without the random choosen showerthought
+
+def generate_thought():
+    """Pick a thought, remove it from the pool, auto-refill if needed, and return it."""
+    try:
+        with open('showerthoughts.json', 'r') as f:
+            data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        data = []
+
+    if not data:  # empty file → repull
+        pull()
+        with open('showerthoughts.json', 'r') as f:
+            data = json.load(f)
+
+    # Pick one random entry
+    chosen = random.choice(data)
+
+    # Remove it from the pool
+    data = [d for d in data if d != chosen]
+
+    # Save updated pool
+    with open('showerthoughts.json', 'w') as f:
+        json.dump(data, f, indent=4)
+
+    return chosen
+
+truth = True
+
+# Sometimes subreddits have this post "Forging A Return to Productive Conversation: An Open Letter To Reddit" so the while loop makes sure that such post is removed 
+
+thought = generate_thought()
+
+thought = thought['data']['title']
+
+print(thought)
 
 warnings.filterwarnings('ignore')
 
-os.environ['GOOGLE_API_KEY'] = "AIzaSyAsOcKmk-zh9sPZM5gWprOnmsG4xnIr4x0"
+os.environ['GOOGLE_API_KEY'] = "AIzaSyAcBV6GhMiBQbo3bDNPy15p91ovSau_898"
 
 llm = LLM(
     provider="google",
-    model="gemini/gemini-1.5-flash",
+    model="gemini-2.5-flash",
     verbose=True,
     temperature=0.5,
-    api_key="AIzaSyAsOcKmk-zh9sPZM5gWprOnmsG4xnIr4x0"
+    api_key="AIzaSyAcBV6GhMiBQbo3bDNPy15p91ovSau_898"
 )
 
 # Custom tool to search gif
@@ -107,12 +187,13 @@ class Tags(BaseModel):
     tags:list
 
 tags_task = Task(
-    description=(
-        "Find suitable tags for the shower thought '{thought}'"
-    ),
-    agent=tags_finder,
-    output_json=Tags,
-    output_file="showerthought.json",
+        description=(
+            "Find suitable tags for the shower thought '{thought}'"
+        ),
+        agent=tags_finder,
+        expected_output="A JSON file",
+        output_json=Tags,
+        output_file="showerthought.json",
 )
 
 # Create and run the crew
@@ -125,8 +206,8 @@ thought_crew = Crew(
 thought_crew.kickoff(inputs={"thought":thought})
 
 with open("showerthought.json", "r") as f:
-    data = json.load()
-with open("showerthought.json", "r") as f:
+    data = json.load(f)
+with open("showerthought.json", "w") as f:
     data["thought"] = thought
     json.dump(data, f, indent=4)
     

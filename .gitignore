@@ -1,1 +1,6 @@
 .env
+db/
+venv/
+__pycache__/
+cron_log.log
+nikal-lawdey-pehli-fursat.gif

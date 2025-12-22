@@ -30,9 +30,9 @@ with open(file_path, 'r') as file:
     first_line = data["thought"]
     caption = "\n".join(data["tags"])
 
-if not first_line or caption:
-    print("The file is empty or contains only whitespace.")
-    raise ValueError("The file is EMPTYYYY BROTHAAAAR!!!!")
+# if not first_line or caption:
+#     print("The file is empty or contains only whitespace.")
+#     raise ValueError("The file is EMPTYYYY BROTHAAAAR!!!!")
 
 
 # Initializing discord webhook
@@ -209,14 +209,14 @@ print(f"Twitter post image saved to {output_path}")
 
 # Load the gif
 gif = VideoFileClip(gif_path)
-gif = gif.loop(duration=5)
+gif = gif.loop(duration=6)
 
 # Load the background image
-audio = AudioFileClip("bgmusic (1).mp3").set_duration(6)
-background_image = ImageClip("bgimage.png").set_duration(6)  # Set duration arbitrarily
+audio = AudioFileClip("bgmusic (1).mp3").set_duration(4)
+background_image = ImageClip("bgimage.png").set_duration(4)  # Set duration arbitrarily
 
 # Load the overlay image
-overlay_image = ImageClip("twitter_post.png").set_duration(6)
+overlay_image = ImageClip("twitter_post.png").set_duration(4)
 
 # Calculate the relative y value
 topyofpost = content_start_y + content_height + padding
@@ -227,7 +227,7 @@ relyvalue = topyvalue/bgimage.size[1]
 relxvalue = ((bgimage.size[0] - 474)/2)/bgimage.size[0]
 
 # Resize and set the position of the GIF
-gif = gif.set_position((relxvalue, relyvalue), relative=True).set_duration(6)
+gif = gif.set_position((relxvalue, relyvalue), relative=True).set_duration(4)
 
 # Set the overlay image's position
 overlay_image = overlay_image.set_pos(("center", "center"))
